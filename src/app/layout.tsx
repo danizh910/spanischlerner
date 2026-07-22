@@ -16,6 +16,20 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Spanischlerner",
   description: "Spanisch lernen: Vokabeln mit Spaced Repetition und Satzbaukasten.",
+  appleWebApp: {
+    // iOS ignores manifest.json for "Zum Home-Bildschirm" - these tags (plus
+    // src/app/apple-icon.png) are what make it install as a standalone app
+    // with a proper icon and title instead of a plain Safari bookmark.
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Spanisch",
+  },
+  other: {
+    // Next only emits the modern "mobile-web-app-capable" tag; Safari
+    // (including older iOS versions) still keys off the legacy vendor-
+    // prefixed one, so set it explicitly too.
+    "apple-mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {

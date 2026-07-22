@@ -8,6 +8,11 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.resolve(__dirname, "../public/icons");
+// Next.js file convention: a static apple-icon.png directly in app/ is
+// auto-served at /apple-icon.png with the right <link rel="apple-touch-icon">
+// tag, no metadata wiring needed. iOS ignores manifest.json icons, so this
+// is required (separately from public/icons/*) for "Zum Home-Bildschirm".
+const APPLE_ICON_PATH = path.resolve(__dirname, "../src/app/apple-icon.png");
 
 const BG = [0x12, 0x12, 0x16]; // dark background matching the app theme
 const FG = [0xe7, 0xb0, 0x08]; // warm accent for the monogram
@@ -133,6 +138,10 @@ function main() {
     writeFileSync(outPath, png);
     console.log(`Geschrieben: ${outPath} (${png.length} Bytes)`);
   }
+
+  const appleIcon = drawIcon(180);
+  writeFileSync(APPLE_ICON_PATH, appleIcon);
+  console.log(`Geschrieben: ${APPLE_ICON_PATH} (${appleIcon.length} Bytes)`);
 }
 
 main();
