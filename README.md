@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Spanischlerner
 
-## Getting Started
+Eine ruhige, werbefreie Spanisch-Lern-App für Anfänger (Deutsch → Spanisch).
+Kein Duolingo-Klon: keine XP, keine Herzen, keine Ligen. Zwei Module:
 
-First, run the development server:
+- **Vokabeln** (`/learn`): frequenzbasierter Wortschatz mit Spaced Repetition (SM-2).
+- **Sätze** (`/build`): Satzmuster-Baukasten zum Erkunden und Üben.
+
+Next.js 15 (App Router) · TypeScript · Tailwind · shadcn/ui · PWA. Kein Auth,
+keine Datenbank — der Lernfortschritt liegt lokal im Browser (`localStorage`).
+
+## Setup
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App läuft unter [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build   # Production-Build
+npm run test    # Vitest (SM-2-Algorithmus)
+npm run lint    # ESLint
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Content-Scripts
 
-## Learn More
+Der Wortschatz liegt in `data/words.json`, die Satzmuster in
+`data/patterns.json`. Beide werden von Scripts in `scripts/` erzeugt, nicht
+von Hand gepflegt.
 
-To learn more about Next.js, take a look at the following resources:
+### Wortschatz erweitern
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run generate:words     # erzeugt/aktualisiert data/words.json
+npm run validate:words     # prüft Schema, doppelte IDs, zu lange Sätze
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`scripts/data/base-word-list.ts` enthält eine kuratierte Liste von rund 1200
+spanischen Wörtern (Artikel/Pronomen/Verben zuerst, dann Substantive nach
+Themen), aus der die ersten 1000 als Frequenzrang-Basis dienen. Es handelt
+sich **nicht** um eine Kopie einer bestimmten proprietären Frequenzliste
+(z. B. Davies' "A Frequency Dictionary of Spanish"), sondern um eine eigene
+Zusammenstellung aus allgemein bekanntem A1/A2-Grundwortschatz, deren
+Reihenfolge die reale Häufigkeit approximiert.
 
-## Deploy on Vercel
+`scripts/data/enrichment.ts` enthält die eigentliche Anreicherung (deutsche
+Übersetzung, Wortart, Genus, Beispielsatz ES/DE, optionale Notiz) — aktuell
+für die ersten **150 Wörter** von Hand verfasst. `generate-words.ts`:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- verarbeitet die Basisliste in Batches von 50 Wörtern,
+- schreibt nach jedem Batch den Zwischenstand nach `data/words.json`,
+- ist **resume-fähig**: bereits erzeugte Wörter (per `es`-Feld erkannt)
+  werden übersprungen, ein Abbruch mitten im Lauf ist also unproblematisch,
+- überspringt Wörter ohne Eintrag in `enrichment.ts` und meldet sie am Ende.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Um die App über die ersten 150 Wörter hinaus auszubauen: weitere Einträge in
+`scripts/data/enrichment.ts` ergänzen (Key = exakte Schreibweise aus
+`base-word-list.ts`) und `npm run generate:words` erneut ausführen.
+
+Homographe, die sich nur durch Akzent unterscheiden (`el`/`él`, `tu`/`tú`,
+`que`/`qué`, `cual`/`cuál`, `quien`/`quién`, …), erhalten automatisch
+eindeutige IDs (`el`, `el-2`, …) — die Zuordnung ist deterministisch anhand
+der Verarbeitungsreihenfolge.
+
+### Satzmuster erweitern
+
+```bash
+npm run generate:patterns  # erzeugt data/patterns.json neu aus scripts/generate-patterns.ts
+```
+
+Die 10 Muster sind dort vollständig hart kodiert (kein Batching nötig, da
+klein und stabil). Neue Muster einfach dem `PATTERNS`-Array hinzufügen.
+
+### PWA-Icons neu erzeugen
+
+```bash
+npm run generate:icons     # schreibt public/icons/icon-192.png und icon-512.png
+```
+
+Abhängigkeitsfreier PNG-Encoder (Node `zlib` + eigenes CRC32), damit keine
+native Bildbibliothek (sharp/canvas) im Repo nötig ist.
+
+## Architektur-Hinweise
+
+- **SRS-Algorithmus**: `src/lib/srs.ts`, eigene SM-2-Implementierung
+  (again/hard/good/easy), getestet in `src/lib/srs.test.ts`.
+- **Storage**: `src/lib/storage.ts` definiert das `ProgressStorage`-Interface
+  (`getProgress` / `setProgress` / `getAllDue` / `exportJson` / `importJson`
+  u. a.). Aktuell gibt es nur den `localStorage`-Adapter. Export/Import als
+  JSON-Datei ist auf der Startseite verlinkt, damit Fortschritt manuell
+  zwischen Geräten übertragen werden kann.
+- **PWA**: `src/app/manifest.ts` (Next-Manifest-Route), `public/sw.js`
+  (handgeschriebener Service Worker, cached App-Shell + `/data/*.json` für
+  volle Offline-Nutzung), Registrierung über
+  `src/components/ServiceWorkerRegister.tsx`.
+- Alle drei Seiten (`/`, `/learn`, `/build`) sind statisch (kein
+  Server-State), was den Service Worker deutlich einfacher hält.
+
+## Später: Migration auf Neon/Postgres
+
+Sobald mehrgeräte-fähige Synchronisation gebraucht wird, kann das
+`ProgressStorage`-Interface aus `src/lib/storage.ts` durch einen zweiten
+Adapter implementiert werden (z. B. `src/lib/storage-neon.ts`), der die
+gleichen Methoden gegen eine Postgres-Tabelle (`word_id`, `ease`, `interval`,
+`due`, `reps`, `lapses`, ...) umsetzt. Die UI-Komponenten importieren nur das
+`storage`-Objekt und die `ProgressStorage`-Typen — an ihnen muss sich dafür
+nichts ändern, es wird lediglich der Export in `storage.ts` ausgetauscht
+(z. B. hinter einem Feature-Flag oder Auth-Check, falls dann doch ein
+Login eingeführt wird).
+
+## Deployment (Vercel)
+
+1. Repo mit Vercel verbinden (Framework wird automatisch als Next.js erkannt).
+2. Keine Umgebungsvariablen nötig (kein Auth, keine Datenbank in v1).
+3. Build-Command/Output sind Standard (`next build`), keine Anpassung nötig.
+
+Lokal geprüft vor dem Push: `npm run build`, `npm run lint`, `npm run test`
+und `npm run validate:words` laufen fehlerfrei durch.
