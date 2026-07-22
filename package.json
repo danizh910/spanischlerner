@@ -11,12 +11,16 @@
     "generate:words": "tsx scripts/generate-words.ts",
     "validate:words": "tsx scripts/validate-words.ts",
     "generate:patterns": "tsx scripts/generate-patterns.ts",
-    "generate:icons": "node scripts/generate-icons.mjs"
+    "generate:icons": "node scripts/generate-icons.mjs",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
+    "@neondatabase/serverless": "^1.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.25.0",
     "next": "15.5.21",
     "react": "18.3.1",
@@ -31,6 +35,8 @@
     "@types/node": "^20",
     "@types/react": "18.3.31",
     "@types/react-dom": "18.3.7",
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "15.5.21",
     "tailwindcss": "^4",
