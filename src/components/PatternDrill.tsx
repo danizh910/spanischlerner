@@ -2,7 +2,9 @@
 
 import { useCallback, useState } from "react";
 import { PATTERNS, fillTemplate } from "@/lib/patterns";
+import { createProgressEntry, reviewCard } from "@/lib/srs";
 import { storage } from "@/lib/storage";
+import { recordPatternProgress } from "@/lib/sync";
 import { shuffle } from "@/lib/utils";
 import type { Pattern } from "@/lib/types";
 
@@ -57,16 +59,8 @@ export function PatternDrill() {
     setIsCorrect(correct);
     setChecked(true);
 
-    const prev = storage.getPatternProgress(round.pattern.id) ?? {
-      attempts: 0,
-      correct: 0,
-      lastPracticed: new Date().toISOString(),
-    };
-    storage.setPatternProgress(round.pattern.id, {
-      attempts: prev.attempts + 1,
-      correct: prev.correct + (correct ? 1 : 0),
-      lastPracticed: new Date().toISOString(),
-    });
+    const entry = storage.getPatternProgress(round.pattern.id) ?? createProgressEntry();
+    recordPatternProgress(round.pattern.id, reviewCard(entry, correct ? "good" : "again"));
   }
 
   function next() {
@@ -76,18 +70,24 @@ export function PatternDrill() {
     setIsCorrect(false);
   }
 
+  const sentenceBorder = !checked
+    ? "border-border"
+    : isCorrect
+      ? "border-accent"
+      : "border-error";
+
   return (
-    <div className="flex flex-col gap-5">
-      <div className="rounded-xl bg-card p-5 text-center ring-1 ring-foreground/10">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          Übersetze ins Spanische
-        </p>
-        <p className="mt-2 text-xl font-medium">{round.targetDe}</p>
+    <div className="flex flex-col gap-6">
+      <div className="border border-border bg-surface p-5 text-center">
+        <p className="text-xs uppercase tracking-widest text-text-dim">Übersetze ins Spanische</p>
+        <p className="mt-2 text-xl text-text">{round.targetDe}</p>
       </div>
 
-      <div className="flex min-h-14 flex-wrap gap-2 rounded-xl border border-dashed border-border p-3">
+      <div
+        className={`flex min-h-14 flex-wrap gap-2 border p-3 transition-colors duration-[80ms] ${sentenceBorder}`}
+      >
         {placedChips.length === 0 ? (
-          <span className="p-2 text-sm text-muted-foreground">
+          <span className="p-2 text-sm text-text-dim">
             Tippe die Wörter unten in der richtigen Reihenfolge an.
           </span>
         ) : (
@@ -96,7 +96,7 @@ export function PatternDrill() {
               key={chip.id}
               type="button"
               onClick={() => unplace(chip.id)}
-              className="min-h-11 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground"
+              className="h-12 border border-accent bg-transparent px-3 text-sm text-text"
             >
               {chip.text}
             </button>
@@ -110,23 +110,17 @@ export function PatternDrill() {
             key={chip.id}
             type="button"
             onClick={() => place(chip.id)}
-            className="min-h-11 rounded-lg bg-muted px-3 text-sm font-medium active:bg-muted/70"
+            className="h-12 border border-border bg-transparent px-3 text-sm text-text transition-colors duration-[80ms] active:border-accent"
           >
             {chip.text}
           </button>
         ))}
       </div>
 
-      {checked ? (
-        <div
-          className={`rounded-xl p-4 text-sm ${
-            isCorrect
-              ? "bg-primary/10 text-primary"
-              : "bg-destructive/10 text-destructive"
-          }`}
-        >
-          <p className="font-medium">{isCorrect ? "Richtig!" : "Nicht ganz."}</p>
-          <p className="mt-1 text-foreground">{round.targetEs}</p>
+      {checked && !isCorrect ? (
+        <div className="border border-error p-4 text-sm">
+          <p className="text-error">Nicht ganz.</p>
+          <p className="mt-1 text-text">{round.targetEs}</p>
         </div>
       ) : null}
 
@@ -134,7 +128,7 @@ export function PatternDrill() {
         type="button"
         disabled={!allPlaced && !checked}
         onClick={checked ? next : check}
-        className="h-14 w-full rounded-xl bg-primary text-primary-foreground disabled:opacity-40 active:opacity-80"
+        className="h-[52px] w-full border border-border bg-transparent text-sm uppercase tracking-widest text-text transition-colors duration-[80ms] active:border-accent disabled:opacity-40"
       >
         {checked ? "Weiter" : "Prüfen"}
       </button>

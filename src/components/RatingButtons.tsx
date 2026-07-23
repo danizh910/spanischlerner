@@ -2,11 +2,11 @@
 
 import type { Rating } from "@/lib/types";
 
-const RATINGS: { value: Rating; label: string; classes: string }[] = [
-  { value: "again", label: "Nochmal", classes: "bg-destructive/15 text-destructive" },
-  { value: "hard", label: "Schwer", classes: "bg-muted text-foreground" },
-  { value: "good", label: "Gut", classes: "bg-secondary text-secondary-foreground" },
-  { value: "easy", label: "Leicht", classes: "bg-primary/15 text-primary" },
+const RATINGS: { value: Rating; label: string }[] = [
+  { value: "again", label: "Nochmal" },
+  { value: "hard", label: "Schwer" },
+  { value: "good", label: "Gut" },
+  { value: "easy", label: "Einfach" },
 ];
 
 type RatingButtonsProps = {
@@ -15,13 +15,15 @@ type RatingButtonsProps = {
 
 export function RatingButtons({ onRate }: RatingButtonsProps) {
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="flex flex-col gap-2">
       {RATINGS.map((r) => (
         <button
           key={r.value}
           type="button"
           onClick={() => onRate(r.value)}
-          className={`flex h-14 flex-col items-center justify-center rounded-xl text-sm font-medium active:opacity-80 ${r.classes}`}
+          className={`h-[52px] w-full border border-border bg-transparent text-sm uppercase tracking-widest text-text transition-colors duration-[80ms] active:border-accent ${
+            r.value === "again" ? "border-l-[3px] border-l-error" : ""
+          }`}
         >
           {r.label}
         </button>

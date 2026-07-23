@@ -51,16 +51,20 @@ export type ProgressEntry = {
   due: string;
   reps: number;
   lapses: number;
+  /** ISO timestamp of the last local change; drives last-write-wins sync merges. */
+  updatedAt: string;
 };
 
 export type ProgressMap = Record<string, ProgressEntry>;
 
 export type CardDirection = "es-de" | "de-es";
 
-export type PatternProgressEntry = {
-  attempts: number;
-  correct: number;
-  lastPracticed: string;
-};
+/**
+ * Same shape as ProgressEntry (mirrors the `pattern_progress` DB table,
+ * which is "analog" to `progress`). Patterns are graded correct/incorrect
+ * in the drill UI, mapped onto the same again/good ratings the SM-2
+ * scheduler uses for words.
+ */
+export type PatternProgressEntry = ProgressEntry;
 
 export type PatternProgressMap = Record<string, PatternProgressEntry>;

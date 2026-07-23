@@ -1,16 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { SyncManager } from "@/components/SyncManager";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Self-hosted via next/font (downloaded at build time, served from our own
+// origin) - no external/CDN request at runtime. Sole typeface for the app.
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
@@ -47,13 +46,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="de"
-      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-background text-foreground overscroll-none">
+    <html lang="de" className={`${jetbrainsMono.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-bg text-text overscroll-none">
         {children}
         <ServiceWorkerRegister />
+        <SyncManager />
       </body>
     </html>
   );

@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BookOpen, Layers } from "lucide-react";
 import { getDueCount } from "@/lib/session";
-import { ProgressBackup } from "@/components/ProgressBackup";
 
 export default function HomePage() {
   const [dueCount, setDueCount] = useState<number | null>(null);
@@ -14,42 +12,38 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-8 px-5 py-10 pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Spanischlerner</h1>
-        <p className="mt-2 h-5 text-sm text-muted-foreground">
-          {dueCount !== null &&
-            (dueCount > 0
-              ? `${dueCount} Karte${dueCount === 1 ? "" : "n"} heute fällig`
-              : "Keine Karten heute fällig")}
-        </p>
-      </div>
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-10 px-5 py-10 pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
+      <p className="h-4 text-center text-xs uppercase tracking-widest text-accent">
+        {dueCount !== null
+          ? dueCount > 0
+            ? `${dueCount} Karte${dueCount === 1 ? "" : "n"} heute fällig`
+            : "Keine Karten heute fällig"
+          : ""}
+      </p>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col">
         <Link
           href="/learn"
-          className="flex min-h-[7.5rem] flex-col justify-center gap-2 rounded-xl bg-card p-6 ring-1 ring-foreground/10 transition-colors active:bg-muted"
+          className="border border-border bg-transparent px-6 py-8 transition-colors duration-[80ms] active:border-accent"
         >
-          <Layers className="size-7 text-primary" aria-hidden />
-          <span className="text-lg font-medium">Vokabeln</span>
-          <span className="text-sm text-muted-foreground">
-            Wortschatz mit Spaced Repetition üben
-          </span>
+          <p className="text-lg uppercase tracking-widest text-text">Vokabeln</p>
+          <p className="mt-1 text-sm text-text-dim">Wortschatz mit Spaced Repetition üben</p>
         </Link>
-
         <Link
           href="/build"
-          className="flex min-h-[7.5rem] flex-col justify-center gap-2 rounded-xl bg-card p-6 ring-1 ring-foreground/10 transition-colors active:bg-muted"
+          className="-mt-px border border-border bg-transparent px-6 py-8 transition-colors duration-[80ms] active:border-accent"
         >
-          <BookOpen className="size-7 text-primary" aria-hidden />
-          <span className="text-lg font-medium">Sätze</span>
-          <span className="text-sm text-muted-foreground">
-            Satzmuster erkunden und üben
-          </span>
+          <p className="text-lg uppercase tracking-widest text-text">Sätze</p>
+          <p className="mt-1 text-sm text-text-dim">Satzmuster erkunden und üben</p>
         </Link>
       </div>
 
-      <ProgressBackup />
+      <Link
+        href="/settings"
+        className="-my-3 inline-block self-center py-3 text-center text-xs uppercase tracking-widest text-text-dim"
+      >
+        Einstellungen
+      </Link>
     </main>
   );
 }

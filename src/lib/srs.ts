@@ -21,6 +21,7 @@ export function createProgressEntry(now: Date = new Date()): ProgressEntry {
     due: now.toISOString(),
     reps: 0,
     lapses: 0,
+    updatedAt: now.toISOString(),
   };
 }
 
@@ -80,6 +81,7 @@ export function reviewCard(
     due: addDays(now, interval).toISOString(),
     reps,
     lapses,
+    updatedAt: now.toISOString(),
   };
 }
 

@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft } from "lucide-react";
 import { FlashCard } from "@/components/FlashCard";
 import { RatingButtons } from "@/components/RatingButtons";
-import { Progress } from "@/components/ui/progress";
 import { buildLearnSession, getSessionStats } from "@/lib/session";
 import { createProgressEntry, reviewCard } from "@/lib/srs";
 import { storage } from "@/lib/storage";
+import { flushQueue, recordWordProgress } from "@/lib/sync";
 import type { CardDirection, Rating, Word } from "@/lib/types";
 
 export default function LearnPage() {
@@ -28,10 +27,11 @@ export default function LearnPage() {
     (rating: Rating) => {
       if (!session || !currentWord) return;
       const entry = storage.getProgress(currentWord.id) ?? createProgressEntry();
-      storage.setProgress(currentWord.id, reviewCard(entry, rating));
+      recordWordProgress(currentWord.id, reviewCard(entry, rating));
 
       if (index + 1 >= session.length) {
         setFinished(true);
+        void flushQueue();
       } else {
         setIndex((i) => i + 1);
         setRevealed(false);
@@ -64,32 +64,35 @@ export default function LearnPage() {
   }, [session, finished, revealed, handleRate]);
 
   const stats = useMemo(() => (finished ? getSessionStats() : null), [finished]);
+  const progressPct = session && session.length > 0 ? (index / session.length) * 100 : 0;
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+1rem)]">
-      <div className="mb-4 flex items-center gap-3">
-        <Link
-          href="/"
-          className="flex size-11 items-center justify-center rounded-full active:bg-muted"
-          aria-label="Zurück"
-        >
-          <ChevronLeft className="size-5" />
-        </Link>
-        <span className="text-sm font-medium text-muted-foreground">Vokabeln</span>
+    <main className="flex w-full flex-1 flex-col">
+      <div className="h-[3px] w-full bg-border">
+        <div
+          className="h-full bg-accent transition-[width] duration-[80ms]"
+          style={{ width: `${finished ? 100 : progressPct}%` }}
+        />
       </div>
 
-      {!session ? null : session.length === 0 ? (
-        <EmptyState />
-      ) : finished ? (
-        <SessionSummary
-          studied={session.length}
-          activeWords={stats?.activeWords ?? 0}
-          dueTomorrow={stats?.dueTomorrow ?? 0}
-        />
-      ) : (
-        <div className="flex flex-1 flex-col justify-between gap-6">
-          <div className="flex flex-col gap-6">
-            <Progress value={(index / session.length) * 100} />
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-4">
+        <Link
+          href="/"
+          className="-my-3 mb-1 inline-block self-start py-3 text-xs uppercase tracking-widest text-text-dim"
+        >
+          Zurück
+        </Link>
+
+        {!session ? null : session.length === 0 ? (
+          <EmptyState />
+        ) : finished ? (
+          <SessionSummary
+            studied={session.length}
+            activeWords={stats?.activeWords ?? 0}
+            dueTomorrow={stats?.dueTomorrow ?? 0}
+          />
+        ) : (
+          <div className="flex flex-1 flex-col justify-between gap-6">
             {currentWord ? (
               <FlashCard
                 word={currentWord}
@@ -98,23 +101,23 @@ export default function LearnPage() {
                 onReveal={() => setRevealed(true)}
               />
             ) : null}
-          </div>
 
-          <div className="pb-2">
-            {revealed ? (
-              <RatingButtons onRate={handleRate} />
-            ) : (
-              <button
-                type="button"
-                onClick={() => setRevealed(true)}
-                className="h-14 w-full rounded-xl bg-primary text-primary-foreground active:opacity-80"
-              >
-                Aufdecken
-              </button>
-            )}
+            <div className="pb-2">
+              {revealed ? (
+                <RatingButtons onRate={handleRate} />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setRevealed(true)}
+                  className="h-[52px] w-full border border-border bg-transparent text-sm uppercase tracking-widest text-text transition-colors duration-[80ms] active:border-accent"
+                >
+                  Aufdecken
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </main>
   );
 }
@@ -122,8 +125,8 @@ export default function LearnPage() {
 function EmptyState() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-      <p className="text-lg font-medium">Keine Karten verfügbar</p>
-      <p className="text-sm text-muted-foreground">Schau später wieder vorbei.</p>
+      <p className="text-text">Keine Karten verfügbar.</p>
+      <p className="text-sm text-text-dim">Schau später wieder vorbei.</p>
     </div>
   );
 }
@@ -138,21 +141,16 @@ function SessionSummary({
   dueTomorrow: number;
 }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-8 text-center">
-      <div>
-        <p className="text-2xl font-semibold">Session beendet</p>
-        <p className="mt-1 text-sm text-muted-foreground">Gut gemacht!</p>
-      </div>
-
-      <dl className="grid w-full grid-cols-3 gap-3">
+    <div className="flex flex-1 flex-col justify-center gap-8">
+      <div className="flex flex-col gap-1 border border-border bg-surface p-5">
         <Stat label="Heute gelernt" value={studied} />
         <Stat label="Fällig morgen" value={dueTomorrow} />
         <Stat label="Aktive Wörter" value={activeWords} />
-      </dl>
+      </div>
 
       <Link
         href="/"
-        className="flex h-12 w-full items-center justify-center rounded-xl bg-primary text-primary-foreground active:opacity-80"
+        className="flex h-[52px] w-full items-center justify-center border border-border bg-transparent text-sm uppercase tracking-widest text-text transition-colors duration-[80ms] active:border-accent"
       >
         Zur Startseite
       </Link>
@@ -162,9 +160,9 @@ function SessionSummary({
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex flex-col items-center gap-1 rounded-xl bg-card p-3 ring-1 ring-foreground/10">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="text-xl font-semibold">{value}</dd>
+    <div className="flex items-baseline justify-between border-b border-border py-2 last:border-b-0">
+      <span className="text-sm text-text-dim">{label}</span>
+      <span className="text-xl text-text">{value}</span>
     </div>
   );
 }

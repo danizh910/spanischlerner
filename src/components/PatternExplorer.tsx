@@ -1,51 +1,60 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { PATTERNS, fillTemplate } from "@/lib/patterns";
+
+function withBlank(template: string, key: string): string {
+  return template.replace(`{{${key}}}`, "...");
+}
 
 export function PatternExplorer() {
   const [patternId, setPatternId] = useState(PATTERNS[0].id);
-  const [optionIndex, setOptionIndex] = useState(0);
+  const [optionIndex, setOptionIndex] = useState<number | null>(null);
 
   const pattern = PATTERNS.find((p) => p.id === patternId) ?? PATTERNS[0];
   const slot = pattern.slots[0];
-  const option = slot.options[optionIndex] ?? slot.options[0];
+  const option = optionIndex !== null ? slot.options[optionIndex] : null;
 
-  const sentenceEs = fillTemplate(pattern.template_es, { [slot.key]: option.es });
-  const sentenceDe = fillTemplate(pattern.template_de, { [slot.key]: option.de });
+  const placeholder = `{{${slot.key}}}`;
+  const [beforeEs, afterEs] = pattern.template_es.split(placeholder);
+  const sentenceDe = option
+    ? fillTemplate(pattern.template_de, { [slot.key]: option.de })
+    : withBlank(pattern.template_de, slot.key);
+
+  function selectPattern(id: string) {
+    setPatternId(id);
+    setOptionIndex(null);
+  }
 
   return (
-    <div className="flex flex-col gap-5">
-      <Select
-        value={patternId}
-        onValueChange={(id: string | null) => {
-          if (!id) return;
-          setPatternId(id);
-          setOptionIndex(0);
-        }}
-      >
-        <SelectTrigger className="h-12 w-full">
-          <SelectValue>{pattern.name}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {PATTERNS.map((p) => (
-            <SelectItem key={p.id} value={p.id}>
-              {p.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap gap-2">
+        {PATTERNS.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => selectPattern(p.id)}
+            className={`h-12 border bg-transparent px-3 text-xs transition-colors duration-[80ms] active:border-accent ${
+              p.id === patternId ? "border-accent text-text" : "border-border text-text-dim"
+            }`}
+          >
+            {p.name.toLowerCase()}
+          </button>
+        ))}
+      </div>
 
-      <div className="rounded-xl bg-card p-5 ring-1 ring-foreground/10">
-        <p className="text-xl font-medium">{sentenceEs}</p>
-        <p className="mt-1 text-muted-foreground">{sentenceDe}</p>
+      <div className="border-b border-border pb-3">
+        <p className="text-sm text-text">{pattern.name.toLowerCase()}</p>
+        <p className="text-xs text-text-dim">{withBlank(pattern.template_de, slot.key)}</p>
+      </div>
+
+      <div className="border border-border bg-surface p-6 text-center">
+        <p className="text-2xl text-text">
+          {beforeEs}
+          <span className="text-accent">{option ? option.es : "____"}</span>
+          {afterEs}
+        </p>
+        <p className="mt-2 text-sm text-text-dim">{sentenceDe}</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -54,10 +63,8 @@ export function PatternExplorer() {
             key={opt.es}
             type="button"
             onClick={() => setOptionIndex(i)}
-            className={`min-h-11 rounded-full px-4 text-sm font-medium ${
-              i === optionIndex
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-foreground active:bg-muted/70"
+            className={`h-12 border bg-transparent px-4 text-sm transition-colors duration-[80ms] active:border-accent ${
+              i === optionIndex ? "border-accent text-text" : "border-border text-text-dim"
             }`}
           >
             {opt.es}

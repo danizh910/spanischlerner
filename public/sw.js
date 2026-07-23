@@ -1,8 +1,9 @@
-const CACHE_NAME = "spanischlerner-v1";
+const CACHE_NAME = "spanischlerner-v2";
 const APP_SHELL = [
   "/",
   "/learn",
   "/build",
+  "/settings",
   "/manifest.webmanifest",
   "/data/words.json",
   "/data/patterns.json",
@@ -69,6 +70,10 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+
+  // Sync endpoints must always hit the network - never serve cached
+  // (and possibly device-specific/stale) progress data.
+  if (url.pathname.startsWith("/api/")) return;
 
   if (request.mode === "navigate") {
     event.respondWith(networkFirst(request));

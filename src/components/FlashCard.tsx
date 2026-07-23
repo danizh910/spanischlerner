@@ -3,13 +3,13 @@
 import type { CardDirection, Word } from "@/lib/types";
 
 const POS_LABELS: Record<Word["pos"], string> = {
-  sust: "Substantiv",
-  verbo: "Verb",
-  adj: "Adjektiv",
-  adv: "Adverb",
-  prep: "Präposition",
-  conj: "Konjunktion",
-  pron: "Pronomen",
+  sust: "sust.",
+  verbo: "verbo",
+  adj: "adj.",
+  adv: "adv.",
+  prep: "prep.",
+  conj: "conj.",
+  pron: "pron.",
 };
 
 type FlashCardProps = {
@@ -22,39 +22,39 @@ type FlashCardProps = {
 export function FlashCard({ word, direction, revealed, onReveal }: FlashCardProps) {
   const front = direction === "es-de" ? word.es : word.de.join(", ");
   const back = direction === "es-de" ? word.de.join(", ") : word.es;
-  const genderLabel = word.gender === "m" ? "der" : word.gender === "f" ? "die" : null;
+  const posLine = word.gender ? `${POS_LABELS[word.pos]} ${word.gender}` : POS_LABELS[word.pos];
 
   return (
-    <button
-      type="button"
-      onClick={onReveal}
-      className="flex min-h-[16rem] w-full flex-col items-center justify-center gap-4 rounded-2xl bg-card p-6 text-center ring-1 ring-foreground/10 active:bg-muted"
-    >
-      <span className="text-xs uppercase tracking-wide text-muted-foreground">
-        {POS_LABELS[word.pos]}
-        {genderLabel ? ` · ${genderLabel}` : ""}
-      </span>
-
-      <span className="text-3xl font-semibold">{front}</span>
+    <div className="flex min-h-[20rem] w-full flex-col border border-border bg-surface">
+      <div className="flex flex-col items-center gap-1 px-6 pt-8 text-center">
+        <span className="text-xs text-text-dim">{posLine}</span>
+        {/* Original spelling on purpose - accents and case are part of what's being learned. */}
+        <span className="text-3xl font-medium text-text">{front}</span>
+      </div>
 
       {revealed ? (
-        <div className="flex flex-col items-center gap-3 border-t border-border pt-4">
-          <span className="text-xl text-primary">{back}</span>
-          <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-            <span>{word.example_es}</span>
-            <span>{word.example_de}</span>
+        <div className="flex flex-1 flex-col gap-4 px-6 pb-8 pt-6">
+          <div className="border-t border-border" />
+          <span className="text-center text-xl text-accent">{back}</span>
+          <div className="flex flex-col gap-1 text-center">
+            <span className="text-text">{word.example_es}</span>
+            <span className="text-text-dim">{word.example_de}</span>
           </div>
           {word.note ? (
-            <span className="mt-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-              {word.note}
-            </span>
+            <span className="text-center text-xs text-accent">{word.note}</span>
           ) : null}
         </div>
       ) : (
-        <span className="text-sm text-muted-foreground">
-          Tippen oder Leertaste zum Aufdecken
-        </span>
+        <button
+          type="button"
+          onClick={onReveal}
+          className="flex flex-1 flex-col items-center justify-center gap-2 px-6 py-10"
+        >
+          <span className="text-xs uppercase tracking-widest text-text-dim">
+            Tippen zum Aufdecken
+          </span>
+        </button>
       )}
-    </button>
+    </div>
   );
 }
