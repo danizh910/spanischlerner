@@ -75,7 +75,7 @@ export default function LearnPage() {
         />
       </div>
 
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-4">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+1rem)]">
         <Link
           href="/"
           className="-my-3 mb-1 inline-block self-start py-3 text-xs uppercase tracking-widest text-text-dim"
